@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Support Scenario Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      padding: 20px;
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+    }
+    .student-container {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .student-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 28%;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .response-options {
+      margin-top: 20px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #ddd;
+    }
+    #feedback {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    #winScreen {
+      display: none;
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Student Support Scenario Game</h2>
+<p>Observe the students and choose who may be showing signs of depression. Then select the best response.</p>
+
+<div class="student-container" id="studentContainer"></div>
+<div class="response-options" id="responseOptions"></div>
+<div id="feedback"></div>
+<div id="winScreen">🎉 Congratulations! You correctly supported 3 students. Game Over.</div>
+
+<script>
+  const categories = ["Social behaviour", "Communication", "Sensory", "Physical", "Cognitive", "Academic performance"];
+  const traitExamples = {
+    "Social behaviour": ["withdrawn from group activities", "chatting often with peers", "engaging but only with one close friend"],
+    "Communication": ["responds quietly and rarely initiates conversation", "talks openly and confidently", "uses humour frequently"],
+    "Sensory": ["overreacts to noise or touch", "calm in noisy environments", "fidgets with items constantly"],
+    "Physical": ["appears tired or low energy", "energetic and active", "frequently complains of headaches"],
+    "Cognitive": ["has difficulty concentrating", "shows strong problem-solving skills", "often forgets instructions"],
+    "Academic performance": ["grades have recently dropped", "produces consistent high-quality work", "rarely submits homework on time"]
+  };
+
+  const correctResponses = [
+    "I’ve noticed you’ve been a bit quiet lately. I’m here if you want to talk.",
+    "You’re not alone in this. There’s support available, and I can help you find it.",
+    "Would you like a break or to speak to someone from wellbeing support?",
+    "Your feelings are valid. It’s okay to not feel okay.",
+    "You’re doing your best, and I’m proud of the effort you’re making.",
+    "Let’s figure out how we can make things feel more manageable.",
+    "Would it help if I checked in with you at the start or end of class?",
+    "I can help you connect with the school counsellor or wellbeing team if you want."
+  ];
+
+  const closeResponses = [
+    "Use active listening, like saying 'I hear you' or 'That sounds really hard.'",
+    "Check in regularly without pressure, e.g. 'Hey, just wanted to see how you're doing.'",
+    "Gently recommend professional support like a school counsellor or psychologist.",
+    "Allow flexible deadlines or reduced workload when needed.",
+    "Integrate mental health awareness into class discussions.",
+    "If you notice self-harm or suicidal thoughts, report immediately to wellbeing staff.",
+    "Offer quiet spaces or breaks when needed to support focus.",
+    "Foster a safe, predictable classroom environment."
+  ];
+
+  const incorrectResponses = [
+    "You’re just being lazy.",
+    "Snap out of it. Just get over it.",
+    "You have nothing to be depressed about.",
+    "Stop being so dramatic.",
+    "If you don't cheer up, there will be consequences.",
+    "Ignoring or laughing off their behaviour.",
+    "Gossiping about their concerns with others.",
+    "You’re just doing this for attention.",
+    "Forcing them to talk in front of others.",
+    "Ignoring serious signs like self-harm or suicidal thoughts."
+  ];
+
+  let students, studentWithDepression;
+  let correctStreak = 0;
+  let selectedCategories = [];
+
+  function getRandomTraits() {
+    const shuffled = categories.slice().sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 3);
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function generateStudent(name, isDepressed, categoriesForRound) {
+    const traits = categoriesForRound.map(cat => {
+      const options = traitExamples[cat];
+      let description;
+      if (isDepressed && Math.random() < 0.7) {
+        description = options[0];
+      } else {
+        description = options[Math.floor(Math.random() * options.length)];
+      }
+      return `<strong>${cat}:</strong> ${description}`;
+    });
+    return { name, traits, isDepressed };
+  }
+
+  function startRound() {
+    if (correctStreak >= 3) {
+      document.getElementById("studentContainer").innerHTML = "";
+      document.getElementById("responseOptions").innerHTML = "";
+      document.getElementById("feedback").innerHTML = "";
+      document.getElementById("winScreen").style.display = "block";
+      return;
+    }
+
+    document.getElementById("feedback").innerHTML = "";
+    document.getElementById("winScreen").style.display = "none";
+    selectedCategories = getRandomTraits();
+
+    const names = ["Liam", "Aisha", "Noah"];
+    const depressedIndex = Math.floor(Math.random() * 3);
+    students = names.map((name, idx) => generateStudent(name, idx === depressedIndex, selectedCategories));
+    studentWithDepression = depressedIndex;
+
+    displayStudents();
+    document.getElementById("responseOptions").innerHTML = "";
+  }
+
+  function displayStudents() {
+    const container = document.getElementById("studentContainer");
+    container.innerHTML = "";
+    students.forEach((student, index) => {
+      const div = document.createElement("div");
+      div.className = "student-card";
+      div.innerHTML = `
+        <h3>${student.name}</h3>
+        <p>${student.traits.join("<br>")}</p>
+        <button onclick="selectStudent(${index})">Select</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function selectStudent(index) {
+    const responseDiv = document.getElementById("responseOptions");
+
+    if (index !== studentWithDepression) {
+      document.getElementById("feedback").innerHTML = 
+        "That student may need support, but they are not showing the key signs this round.<br><br>" + 
+        `<button onclick="startRound()">Try Again</button>`;
+      responseDiv.innerHTML = "";
+      return;
+    }
+
+    document.getElementById("feedback").innerHTML = 
+      "✅ Good job identifying the characteristics. Now how should you respond?";
+
+    const chosenCorrect = correctResponses[Math.floor(Math.random() * correctResponses.length)];
+    const chosenClose = closeResponses[Math.floor(Math.random() * closeResponses.length)];
+    const chosenIncorrect = incorrectResponses[Math.floor(Math.random() * incorrectResponses.length)];
+
+    const responseOptions = shuffleArray([
+      { type: 'correct', text: chosenCorrect },
+      { type: 'close', text: chosenClose },
+      { type: 'incorrect', text: chosenIncorrect }
+    ]);
+
+    responseDiv.innerHTML = `<h3>What would you say to ${students[index].name}?</h3>` +
+      responseOptions.map(r => 
+        `<button onclick="submitResponse('${r.type}')">${r.text}</button>`
+      ).join("<br>");
+  }
+
+  function submitResponse(type) {
+    const feedbackEl = document.getElementById("feedback");
+    let message = "";
+
+    if (type === "correct") {
+      correctStreak++;
+      message = "<strong>✅ Correct:</strong> You've approached this thoughtfully and compassionately.";
+    } else if (type === "close") {
+      message = "<strong>🔶 Close:</strong> You're showing awareness, but consider being more open and supportive.";
+    } else {
+      message = "<strong>❌ Not quite:</strong> Try to avoid dismissive language. A gentle check-in works better.";
+    }
+
+    feedbackEl.innerHTML += `<br><br>${message}<br><br><button onclick="startRound()">Start Next Round</button>`;
+    document.getElementById("responseOptions").innerHTML = "";
+  }
+
+  startRound();
+</script>
+
+</body>
+</html>
